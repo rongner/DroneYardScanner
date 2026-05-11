@@ -149,8 +149,11 @@ async def simulate_scan(
         raise HTTPException(404, "Waypoint not found")
 
     photo_bytes = await photo.read()
-    photo_path = _save_photo(mission_id, sequence, photo_bytes)
-    analysis = await assess_plant_health(photo_path)
+    try:
+        photo_path = _save_photo(mission_id, sequence, photo_bytes)
+    except OSError as exc:
+        raise HTTPException(500, f"Failed to save photo: {exc}") from exc
+    analysis = await assess_plant_health(photo_path)  # always returns a dict — never raises
 
     existing_row = await db.execute(
         select(PlantScan).where(PlantScan.waypoint_id == wp.id)
