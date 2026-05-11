@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from datetime import datetime
 from sqlalchemy import String, Float, Integer, DateTime, ForeignKey, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 from .base import Base
+from .yard import Yard
 
 
 class MissionStatus(str, enum.Enum):
@@ -20,8 +23,10 @@ class Mission(Base):
     status: Mapped[MissionStatus] = mapped_column(SAEnum(MissionStatus), default=MissionStatus.planned)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    yard_id: Mapped[int | None] = mapped_column(ForeignKey("yards.id"), nullable=True)
 
-    waypoints: Mapped[list["Waypoint"]] = relationship(back_populates="mission", order_by="Waypoint.sequence")
+    waypoints: Mapped[list[Waypoint]] = relationship(back_populates="mission", order_by="Waypoint.sequence")
+    yard: Mapped[Yard | None] = relationship(back_populates="missions")
 
 
 class Waypoint(Base):
@@ -35,7 +40,7 @@ class Waypoint(Base):
     label: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     mission: Mapped[Mission] = relationship(back_populates="waypoints")
-    scan: Mapped["PlantScan | None"] = relationship(back_populates="waypoint")
+    scan: Mapped[PlantScan | None] = relationship(back_populates="waypoint")
 
 
 class PlantScan(Base):

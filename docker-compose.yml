@@ -22,13 +22,22 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/droneyardscanner
-      KINDWISE_API_KEY: ${KINDWISE_API_KEY}
-      CORS_ORIGINS: '["http://localhost:5173"]'
+      KINDWISE_API_KEY: ${KINDWISE_API_KEY:-}
+      CORS_ORIGINS: '["http://localhost:5173","http://localhost"]'
     volumes:
       - ./photos:/app/photos
     depends_on:
       db:
         condition: service_healthy
+
+  web:
+    build:
+      context: src/web
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - api
 
 volumes:
   pgdata:

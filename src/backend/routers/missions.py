@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -19,6 +21,7 @@ class WaypointIn(BaseModel):
 
 class MissionIn(BaseModel):
     name: str
+    yard_id: int | None = None
     waypoints: list[WaypointIn]
 
 
@@ -28,7 +31,6 @@ class WaypointOut(BaseModel):
     latitude: float
     longitude: float
     label: str | None
-
     model_config = {"from_attributes": True}
 
 
@@ -36,28 +38,29 @@ class MissionOut(BaseModel):
     id: int
     name: str
     status: MissionStatus
+    yard_id: int | None
+    created_at: datetime
     waypoints: list[WaypointOut]
-
     model_config = {"from_attributes": True}
 
 
 @router.get("", response_model=list[MissionOut])
-async def list_missions(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Mission).options(selectinload(Mission.waypoints)).order_by(Mission.id.desc())
-    )
+async def list_missions(yard_id: int | None = None, db: AsyncSession = Depends(get_db)):
+    q = select(Mission).options(selectinload(Mission.waypoints)).order_by(Mission.id.desc())
+    if yard_id is not None:
+        q = q.where(Mission.yard_id == yard_id)
+    result = await db.execute(q)
     return result.scalars().all()
 
 
 @router.post("", response_model=MissionOut, status_code=201)
 async def create_mission(body: MissionIn, db: AsyncSession = Depends(get_db)):
-    mission = Mission(name=body.name)
+    mission = Mission(name=body.name, yard_id=body.yard_id)
     db.add(mission)
     await db.flush()
     for wp in body.waypoints:
         db.add(Waypoint(mission_id=mission.id, **wp.model_dump()))
     await db.commit()
-    await db.refresh(mission)
     result = await db.execute(
         select(Mission).options(selectinload(Mission.waypoints)).where(Mission.id == mission.id)
     )

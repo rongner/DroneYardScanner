@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .database import engine
 from .models import Base
-from .routers import missions, drone, scans
+from .routers import missions, drone, scans, yards
 
 
 @asynccontextmanager
@@ -28,6 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(yards.router)
 app.include_router(missions.router)
 app.include_router(drone.router)
 app.include_router(scans.router)
