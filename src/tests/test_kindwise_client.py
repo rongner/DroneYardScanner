@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import backend.plant.kindwise_client as kw
 
 
-def _mock_settings(api_key: str):
-    return MagicMock(kindwise_api_key=api_key)
+def _mock_settings(api_key: str, photo_dir: str = "photos"):
+    return MagicMock(kindwise_api_key=api_key, photo_dir=photo_dir)
 
 
 def _make_http_client(return_value=None, side_effect=None):
@@ -32,7 +32,7 @@ async def test_no_api_key_returns_unknown(monkeypatch):
 async def test_http_status_error_returns_unknown(tmp_path, monkeypatch):
     photo = tmp_path / 'p.jpg'
     photo.write_bytes(b'\xff\xd8' + b'\x00' * 10)
-    monkeypatch.setattr(kw, 'settings', _mock_settings('key'))
+    monkeypatch.setattr(kw, 'settings', _mock_settings('key', str(tmp_path)))
 
     mock_resp = MagicMock(status_code=401, text='Unauthorized')
     exc = httpx.HTTPStatusError('401', request=MagicMock(), response=mock_resp)
@@ -46,7 +46,7 @@ async def test_http_status_error_returns_unknown(tmp_path, monkeypatch):
 async def test_request_error_returns_unknown(tmp_path, monkeypatch):
     photo = tmp_path / 'p.jpg'
     photo.write_bytes(b'\xff\xd8' + b'\x00' * 10)
-    monkeypatch.setattr(kw, 'settings', _mock_settings('key'))
+    monkeypatch.setattr(kw, 'settings', _mock_settings('key', str(tmp_path)))
 
     exc = httpx.ConnectError('Network unreachable')
 
@@ -59,7 +59,7 @@ async def test_request_error_returns_unknown(tmp_path, monkeypatch):
 async def test_successful_response_parsed(tmp_path, monkeypatch):
     photo = tmp_path / 'p.jpg'
     photo.write_bytes(b'\xff\xd8' + b'\x00' * 10)
-    monkeypatch.setattr(kw, 'settings', _mock_settings('key'))
+    monkeypatch.setattr(kw, 'settings', _mock_settings('key', str(tmp_path)))
 
     data = {
         'result': {
@@ -85,7 +85,7 @@ async def test_successful_response_parsed(tmp_path, monkeypatch):
 async def test_unhealthy_plant(tmp_path, monkeypatch):
     photo = tmp_path / 'p.jpg'
     photo.write_bytes(b'\xff\xd8' + b'\x00' * 10)
-    monkeypatch.setattr(kw, 'settings', _mock_settings('key'))
+    monkeypatch.setattr(kw, 'settings', _mock_settings('key', str(tmp_path)))
 
     data = {
         'result': {
@@ -108,7 +108,7 @@ async def test_unhealthy_plant(tmp_path, monkeypatch):
 async def test_empty_suggestions_handled(tmp_path, monkeypatch):
     photo = tmp_path / 'p.jpg'
     photo.write_bytes(b'\xff\xd8' + b'\x00' * 10)
-    monkeypatch.setattr(kw, 'settings', _mock_settings('key'))
+    monkeypatch.setattr(kw, 'settings', _mock_settings('key', str(tmp_path)))
 
     data = {
         'result': {
@@ -132,7 +132,7 @@ async def test_empty_suggestions_handled(tmp_path, monkeypatch):
 async def test_diseases_capped_at_three(tmp_path, monkeypatch):
     photo = tmp_path / 'p.jpg'
     photo.write_bytes(b'\xff\xd8' + b'\x00' * 10)
-    monkeypatch.setattr(kw, 'settings', _mock_settings('key'))
+    monkeypatch.setattr(kw, 'settings', _mock_settings('key', str(tmp_path)))
 
     data = {
         'result': {
