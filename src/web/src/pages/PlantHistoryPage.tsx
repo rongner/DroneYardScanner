@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Leaf, ChevronLeft, TrendingUp, TrendingDown } from 'lucide-react'
 import { api } from '@/api/client'
 import { useYard } from '@/contexts/useYard'
+import { ScanPhoto } from '@/components/ScanPhoto'
 import type { PlantScan, PlantSummary } from '@/api/types'
 
 function HealthBadge({ status }: { status: string | null }) {
@@ -58,11 +59,9 @@ function ScanHistoryCard({ scan }: { scan: PlantScan }) {
           <HealthTrendIcon status={scan.health_status} />
         </div>
         <div className="bg-slate-900 rounded-xl overflow-hidden">
-          <img
+          <ScanPhoto
             src={api.scans.photoUrl(scan.id)}
-            alt="Plant photo"
-            className="w-full h-36 object-cover"
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+            className="w-full h-36"
           />
           <div className="p-3 space-y-1.5">
             <div className="flex items-center gap-2">

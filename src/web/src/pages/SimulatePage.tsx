@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Camera, ChevronRight, CheckCircle, Trash2 } from 'lucide-react'
+import { ScanPhoto } from '@/components/ScanPhoto'
 import L from 'leaflet'
 import { api } from '@/api/client'
 import { useYard } from '@/contexts/useYard'
@@ -299,11 +300,9 @@ export default function SimulatePage() {
           {/* Result card */}
           {currentResult && (
             <div className="bg-slate-800 rounded-xl overflow-hidden">
-              <img
+              <ScanPhoto
                 src={api.scans.photoUrl(currentResult.id)}
-                alt="Plant photo"
-                className="w-full h-40 object-cover"
-                onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                className="w-full h-40"
               />
               <div className="p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">

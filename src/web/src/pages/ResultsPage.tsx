@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { useYard } from '@/contexts/useYard'
+import { ScanPhoto } from '@/components/ScanPhoto'
 import type { PlantScan } from '@/api/types'
 
 function HealthBadge({ status }: { status: string | null }) {
@@ -27,11 +28,10 @@ function ScanCard({ scan }: { scan: PlantScan }) {
   return (
     <div className="bg-slate-900 rounded-xl overflow-hidden flex flex-col">
       <div className="relative">
-        <img
+        <ScanPhoto
           src={api.scans.photoUrl(scan.id)}
           alt={scan.plant_name ?? 'Plant'}
-          className="w-full h-40 object-cover"
-          onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          className="w-full h-40"
         />
         <span className="absolute top-2 right-2 bg-slate-900/80 text-slate-400 text-xs px-1.5 py-0.5 rounded">
           {scan.waypoint.label ?? `#${scan.waypoint.sequence + 1}`}
