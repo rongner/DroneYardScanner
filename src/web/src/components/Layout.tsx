@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Settings } from 'lucide-react'
 import { useYard } from '@/contexts/useYard'
 
 const navItems = [
@@ -91,6 +91,15 @@ export default function Layout() {
             </NavLink>
           ))}
         </div>
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `ml-2 transition-colors ${isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`
+          }
+          title="Settings"
+        >
+          <Settings size={16} />
+        </NavLink>
         <YardSelector />
       </nav>
       <main className="flex-1 flex flex-col">

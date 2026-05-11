@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Yard, Mission, PlantScan, PlantSummary, DroneStatus, WaypointInput } from './types'
+import type { Yard, Mission, PlantScan, PlantSummary, DroneStatus, WaypointInput, AppSettings } from './types'
 
 const http = axios.create({ baseURL: '/api' })
 
@@ -35,5 +35,10 @@ export const api = {
     plantHistory: (yardId: number, label: string) =>
       http.get<PlantScan[]>('/scans/plant-history', { params: { yard_id: yardId, label } }).then(r => r.data),
     photoUrl: (scanId: number) => `/api/scans/${scanId}/photo`,
+  },
+  settings: {
+    get: () => http.get<AppSettings>('/settings').then(r => r.data),
+    update: (patch: { tello_host?: string }) =>
+      http.patch<AppSettings>('/settings', patch).then(r => r.data),
   },
 }

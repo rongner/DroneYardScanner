@@ -67,3 +67,9 @@ export interface WaypointInput {
   longitude: number
   label?: string
 }
+
+export interface AppSettings {
+  tello_host: string
+  photo_dir: string
+  kindwise_configured: boolean
+}

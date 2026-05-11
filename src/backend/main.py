@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .database import engine
 from .models import Base
-from .routers import missions, drone, scans, yards
+from .routers import missions, drone, scans, yards, settings
 
 
 @asynccontextmanager
@@ -32,6 +32,7 @@ app.include_router(yards.router)
 app.include_router(missions.router)
 app.include_router(drone.router)
 app.include_router(scans.router)
+app.include_router(settings.router)
 
 
 @app.get("/healthz")
