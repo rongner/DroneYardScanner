@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import pathlib
 import httpx
 from ..config import settings
 
@@ -15,7 +16,15 @@ async def assess_plant_health(photo_path: str) -> dict:
     if not settings.kindwise_api_key:
         return _UNKNOWN
 
-    with open(photo_path, "rb") as f:
+    base = pathlib.Path(settings.photo_dir).resolve()
+    resolved = pathlib.Path(photo_path).resolve()
+    try:
+        resolved.relative_to(base)
+    except ValueError:
+        logger.warning("Photo path outside photo_dir, skipping Kindwise: %s", photo_path)
+        return _UNKNOWN
+
+    with open(resolved, "rb") as f:
         image_b64 = base64.b64encode(f.read()).decode()
 
     payload = {"images": [image_b64], "health": "all"}

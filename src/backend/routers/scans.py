@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import pathlib
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -192,10 +192,11 @@ async def simulate_scan(
 
 
 def _save_photo(mission_id: int, sequence: int, data: bytes) -> str:
-    dir_path = os.path.join(settings.photo_dir, str(mission_id))
-    os.makedirs(dir_path, exist_ok=True)
-    filename = f"wp{sequence:02d}_{datetime.utcnow().strftime('%H%M%S')}.jpg"
-    path = os.path.join(dir_path, filename)
-    with open(path, "wb") as f:
-        f.write(data)
-    return path
+    base = pathlib.Path(settings.photo_dir).resolve()
+    dir_path = base / str(int(mission_id))
+    dir_path.mkdir(parents=True, exist_ok=True)
+    filename = f"wp{int(sequence):02d}_{datetime.utcnow().strftime('%H%M%S')}.jpg"
+    path = dir_path / filename
+    path.resolve().relative_to(base)  # raises ValueError if outside photo_dir
+    path.write_bytes(data)
+    return str(path)
