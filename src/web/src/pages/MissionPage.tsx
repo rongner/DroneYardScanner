@@ -10,6 +10,7 @@ interface DraftWaypoint {
   lat: number
   lon: number
   label: string
+  accuracy: number
 }
 
 function numberedIcon(n: number) {
@@ -25,6 +26,7 @@ export default function MissionPage() {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.Marker[]>([])
+  const circlesRef = useRef<L.Circle[]>([])
   const polylineRef = useRef<L.Polyline | null>(null)
   const navigate = useNavigate()
   const { activeYardId } = useYard()
@@ -64,6 +66,8 @@ export default function MissionPage() {
 
     markersRef.current.forEach(m => m.remove())
     markersRef.current = []
+    circlesRef.current.forEach(c => c.remove())
+    circlesRef.current = []
     polylineRef.current?.remove()
     polylineRef.current = null
 
@@ -72,6 +76,18 @@ export default function MissionPage() {
         .addTo(map)
         .bindPopup(wp.label || `Waypoint ${i + 1}`)
       markersRef.current.push(marker)
+
+      if (wp.accuracy > 0) {
+        const circle = L.circle([wp.lat, wp.lon], {
+          radius: wp.accuracy,
+          color: '#10b981',
+          fillColor: '#10b981',
+          fillOpacity: 0.08,
+          weight: 1,
+          opacity: 0.4,
+        }).addTo(map)
+        circlesRef.current.push(circle)
+      }
     })
 
     if (waypoints.length >= 2) {
@@ -87,7 +103,7 @@ export default function MissionPage() {
       pos => {
         setWaypoints(prev => [
           ...prev,
-          { lat: pos.coords.latitude, lon: pos.coords.longitude, label: pendingLabel },
+          { lat: pos.coords.latitude, lon: pos.coords.longitude, label: pendingLabel, accuracy: pos.coords.accuracy ?? 0 },
         ])
         setPendingLabel('')
         setGpsDenied(false)
@@ -179,6 +195,9 @@ export default function MissionPage() {
                   <p className="text-xs text-slate-400 truncate">
                     {wp.lat.toFixed(6)}, {wp.lon.toFixed(6)}
                   </p>
+                  {wp.accuracy > 0 && (
+                    <p className="text-xs text-slate-600">±{Math.round(wp.accuracy)} m</p>
+                  )}
                 </div>
                 <button
                   onClick={() => removeWaypoint(i)}
