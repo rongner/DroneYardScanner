@@ -126,7 +126,7 @@ export default function FlightPage() {
               <option value="">— choose a mission —</option>
               {missions?.map(m => (
                 <option key={m.id} value={m.id}>
-                  {m.name} · {m.waypoints?.length ?? 0} waypoints · {m.status}
+                  {m.name} · {m.waypoints?.length ?? 0} waypoints · {m.status.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())}
                 </option>
               ))}
             </select>

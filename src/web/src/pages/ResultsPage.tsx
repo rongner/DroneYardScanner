@@ -3,17 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { useYard } from '@/contexts/useYard'
 import { ScanPhoto } from '@/components/ScanPhoto'
+import { HealthBadge } from '@/components/HealthBadge'
 import type { PlantScan } from '@/api/types'
-
-function HealthBadge({ status }: { status: string | null }) {
-  if (!status) return null
-  const healthy = status.toLowerCase().includes('healthy')
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${healthy ? 'bg-emerald-900 text-emerald-300' : 'bg-red-900 text-red-300'}`}>
-      {status}
-    </span>
-  )
-}
 
 function StatCard({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
   return (
@@ -81,7 +72,7 @@ export default function ResultsPage() {
         >
           <option value="">— select a mission —</option>
           {missions?.map(m => (
-            <option key={m.id} value={m.id}>{m.name} · {m.status}</option>
+            <option key={m.id} value={m.id}>{m.name} · {m.status.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())}</option>
           ))}
         </select>
       </div>

@@ -4,17 +4,8 @@ import { Leaf, ChevronLeft, TrendingUp, TrendingDown } from 'lucide-react'
 import { api } from '@/api/client'
 import { useYard } from '@/contexts/useYard'
 import { ScanPhoto } from '@/components/ScanPhoto'
+import { HealthBadge } from '@/components/HealthBadge'
 import type { PlantScan, PlantSummary } from '@/api/types'
-
-function HealthBadge({ status }: { status: string | null }) {
-  if (!status) return <span className="text-xs text-slate-500">No data</span>
-  const healthy = status.toLowerCase().includes('healthy')
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${healthy ? 'bg-emerald-900 text-emerald-300' : 'bg-red-900 text-red-300'}`}>
-      {status}
-    </span>
-  )
-}
 
 function HealthTrendIcon({ status }: { status: string | null }) {
   if (!status) return null

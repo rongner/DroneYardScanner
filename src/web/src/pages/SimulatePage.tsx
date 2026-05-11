@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Camera, ChevronRight, CheckCircle, Trash2 } from 'lucide-react'
 import { ScanPhoto } from '@/components/ScanPhoto'
+import { HealthBadge } from '@/components/HealthBadge'
 import L from 'leaflet'
 import { api } from '@/api/client'
 import { useYard } from '@/contexts/useYard'
@@ -16,16 +17,6 @@ function mapIcon(seq: number, active: boolean) {
     iconSize: [28, 28],
     iconAnchor: [14, 14],
   })
-}
-
-function HealthBadge({ status }: { status: string | null }) {
-  if (!status) return null
-  const healthy = status.toLowerCase().includes('healthy')
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${healthy ? 'bg-emerald-900 text-emerald-300' : 'bg-red-900 text-red-300'}`}>
-      {status}
-    </span>
-  )
 }
 
 export default function SimulatePage() {
