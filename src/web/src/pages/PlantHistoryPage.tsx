@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Leaf, ChevronLeft, TrendingUp, TrendingDown } from 'lucide-react'
 import { api } from '@/api/client'
-import { useYard } from '@/contexts/YardContext'
+import { useYard } from '@/contexts/useYard'
 import type { PlantScan, PlantSummary } from '@/api/types'
 
 function HealthBadge({ status }: { status: string | null }) {

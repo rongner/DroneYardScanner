@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Camera, ChevronRight, CheckCircle, Trash2 } from 'lucide-react'
 import L from 'leaflet'
 import { api } from '@/api/client'
-import { useYard } from '@/contexts/YardContext'
+import { useYard } from '@/contexts/useYard'
 import type { PlantScan } from '@/api/types'
 
 function mapIcon(seq: number, active: boolean) {
@@ -65,7 +65,7 @@ export default function SimulatePage() {
     enabled: selectedId !== null,
   })
 
-  const waypoints = mission?.waypoints ?? []
+  const waypoints = useMemo(() => mission?.waypoints ?? [], [mission?.waypoints])
   const currentWp = waypoints[step]
   const allDone = started && step >= waypoints.length
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
@@ -12,7 +12,8 @@ interface YardCtx {
   removeYard: (id: number) => Promise<void>
 }
 
-const YardContext = createContext<YardCtx | null>(null)
+// eslint-disable-next-line react-refresh/only-export-components
+export const YardContext = createContext<YardCtx | null>(null)
 
 export function YardProvider({ children }: { children: ReactNode }) {
   const [activeYardId, setActiveYardIdState] = useState<number | null>(() => {
@@ -64,8 +65,3 @@ export function YardProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useYard() {
-  const ctx = useContext(YardContext)
-  if (!ctx) throw new Error('useYard must be used within YardProvider')
-  return ctx
-}

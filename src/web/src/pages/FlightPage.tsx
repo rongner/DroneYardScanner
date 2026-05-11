@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Radio, Wifi, WifiOff, Play, Square, Trash2 } from 'lucide-react'
 import { api } from '@/api/client'
-import { useYard } from '@/contexts/YardContext'
+import { useYard } from '@/contexts/useYard'
 import type { FlightMessage } from '@/api/types'
 
 type FlightState = 'idle' | 'flying' | 'done' | 'error'

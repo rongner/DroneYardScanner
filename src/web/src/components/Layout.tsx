@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Plus, X } from 'lucide-react'
-import { useYard } from '@/contexts/YardContext'
+import { useYard } from '@/contexts/useYard'
 
 const navItems = [
   { to: '/', label: 'Plan' },

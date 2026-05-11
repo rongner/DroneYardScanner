@@ -3,7 +3,7 @@ import L from 'leaflet'
 import { MapPin, Trash2, Save } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/api/client'
-import { useYard } from '@/contexts/YardContext'
+import { useYard } from '@/contexts/useYard'
 import type { WaypointInput } from '@/api/types'
 
 interface DraftWaypoint {
