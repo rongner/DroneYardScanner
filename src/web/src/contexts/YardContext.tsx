@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
@@ -22,6 +22,13 @@ export function YardProvider({ children }: { children: ReactNode }) {
 
   const qc = useQueryClient()
   const { data: yards = [] } = useQuery({ queryKey: ['yards'], queryFn: api.yards.list })
+
+  // Clear stale localStorage ID if the yard was deleted in another tab or session
+  useEffect(() => {
+    if (yards.length > 0 && activeYardId !== null && !yards.some(y => y.id === activeYardId)) {
+      setActiveYardId(null)
+    }
+  }, [yards, activeYardId])
 
   const addMutation = useMutation({
     mutationFn: (name: string) => api.yards.create(name),

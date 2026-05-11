@@ -15,6 +15,15 @@ from .tello_controller import tello
 logger = logging.getLogger(__name__)
 
 StatusCallback = Callable[[str], Awaitable[None]]
+_TELLO_TIMEOUT = 10.0  # seconds per drone command before treating as a WiFi drop
+
+
+async def _tello(coro, label: str):
+    """Run a Tello coroutine with a timeout; raises RuntimeError on hang."""
+    try:
+        return await asyncio.wait_for(coro, timeout=_TELLO_TIMEOUT)
+    except asyncio.TimeoutError:
+        raise RuntimeError(f"Tello command timed out: {label}")
 
 
 async def run_mission(mission: Mission, db: AsyncSession, on_status: StatusCallback):
@@ -27,7 +36,7 @@ async def run_mission(mission: Mission, db: AsyncSession, on_status: StatusCallb
 
     try:
         await on_status("Taking off")
-        await tello.takeoff()
+        await _tello(tello.takeoff(), "takeoff")
 
         prev_lat = waypoints[0].latitude
         prev_lon = waypoints[0].longitude
@@ -35,11 +44,11 @@ async def run_mission(mission: Mission, db: AsyncSession, on_status: StatusCallb
         for wp in waypoints:
             await on_status(f"Flying to waypoint {wp.sequence + 1}/{len(waypoints)}")
             move = gps_to_relative_move(prev_lat, prev_lon, wp.latitude, wp.longitude)
-            await tello.move(move)
+            await _tello(tello.move(move), "move")
             await asyncio.sleep(1)  # settle after move
 
             await on_status(f"Capturing photo at waypoint {wp.sequence + 1}")
-            photo_bytes = await tello.take_photo()
+            photo_bytes = await _tello(tello.take_photo(), "take_photo")
             photo_path = _save_photo(mission.id, wp.sequence, photo_bytes)
 
             await on_status(f"Analysing plant health at waypoint {wp.sequence + 1}")
@@ -60,7 +69,7 @@ async def run_mission(mission: Mission, db: AsyncSession, on_status: StatusCallb
             prev_lat, prev_lon = wp.latitude, wp.longitude
 
         await on_status("Returning home and landing")
-        await tello.land()
+        await _tello(tello.land(), "land")
 
         mission.status = MissionStatus.completed
         mission.completed_at = datetime.utcnow()
@@ -69,7 +78,7 @@ async def run_mission(mission: Mission, db: AsyncSession, on_status: StatusCallb
         logger.error("Mission %d failed: %s", mission.id, exc)
         mission.status = MissionStatus.failed
         try:
-            await tello.land()
+            await _tello(tello.land(), "emergency land")
         except Exception:
             pass
         raise

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { Radio, Wifi, WifiOff, Play, Square } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Radio, Wifi, WifiOff, Play, Square, Trash2 } from 'lucide-react'
 import { api } from '@/api/client'
 import { useYard } from '@/contexts/YardContext'
 import type { FlightMessage } from '@/api/types'
@@ -28,6 +28,7 @@ function StatusBadge({ state }: { state: FlightState }) {
 export default function FlightPage() {
   const [searchParams] = useSearchParams()
   const { activeYardId } = useYard()
+  const qc = useQueryClient()
   const [selectedId, setSelectedId] = useState<number | null>(
     searchParams.get('mission') ? Number(searchParams.get('mission')) : null,
   )
@@ -39,6 +40,14 @@ export default function FlightPage() {
   const { data: missions } = useQuery({
     queryKey: ['missions', activeYardId],
     queryFn: () => api.missions.list(activeYardId),
+  })
+
+  const deleteMission = useMutation({
+    mutationFn: (id: number) => api.missions.remove(id),
+    onSuccess: () => {
+      setSelectedId(null)
+      void qc.invalidateQueries({ queryKey: ['missions'] })
+    },
   })
 
   const { data: droneStatus, refetch: refetchStatus } = useQuery({
@@ -82,10 +91,18 @@ export default function FlightPage() {
   }
 
   function stopFlight() {
+    if (!window.confirm('Abort flight? The drone will land immediately.')) return
     wsRef.current?.close()
     wsRef.current = null
     setFlightState('idle')
     setLogs(prev => [...prev, 'Mission aborted'])
+  }
+
+  function handleDeleteMission() {
+    if (!selectedId) return
+    const name = missions?.find(m => m.id === selectedId)?.name ?? 'this mission'
+    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return
+    deleteMission.mutate(selectedId)
   }
 
   return (
@@ -94,18 +111,35 @@ export default function FlightPage() {
 
       <div className="bg-slate-900 rounded-xl p-4 space-y-3">
         <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Mission</h2>
-        <select
-          value={selectedId ?? ''}
-          onChange={e => setSelectedId(e.target.value ? Number(e.target.value) : null)}
-          className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-        >
-          <option value="">— choose a mission —</option>
-          {missions?.map(m => (
-            <option key={m.id} value={m.id}>
-              {m.name} · {m.waypoints?.length ?? 0} waypoints · {m.status}
-            </option>
-          ))}
-        </select>
+        {missions?.length === 0 ? (
+          <p className="text-sm text-slate-400">
+            No missions yet.{' '}
+            <Link to="/" className="text-emerald-400 underline">Create one on the Plan page.</Link>
+          </p>
+        ) : (
+          <div className="flex gap-2">
+            <select
+              value={selectedId ?? ''}
+              onChange={e => setSelectedId(e.target.value ? Number(e.target.value) : null)}
+              className="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            >
+              <option value="">— choose a mission —</option>
+              {missions?.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.name} · {m.waypoints?.length ?? 0} waypoints · {m.status}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleDeleteMission}
+              disabled={!selectedId || deleteMission.isPending}
+              title="Delete selected mission"
+              className="px-3 text-slate-500 hover:text-red-400 disabled:opacity-30 transition-colors"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-slate-900 rounded-xl p-4 space-y-4">
@@ -160,10 +194,20 @@ export default function FlightPage() {
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Control</h2>
           <StatusBadge state={flightState} />
         </div>
+        {droneStatus?.connected && droneStatus.battery != null && droneStatus.battery < 25 && (
+          <p className="text-xs text-red-400">
+            Battery too low ({droneStatus.battery}%) — charge before flying.
+          </p>
+        )}
         <div className="flex gap-2">
           <button
             onClick={startMission}
-            disabled={!selectedId || !droneStatus?.connected || flightState === 'flying'}
+            disabled={
+              !selectedId ||
+              !droneStatus?.connected ||
+              flightState === 'flying' ||
+              (droneStatus?.battery != null && droneStatus.battery < 25)
+            }
             className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-medium py-2 rounded transition-colors"
           >
             <Play size={14} /> Start Mission

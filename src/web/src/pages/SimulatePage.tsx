@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Camera, ChevronRight, CheckCircle } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Camera, ChevronRight, CheckCircle, Trash2 } from 'lucide-react'
 import L from 'leaflet'
 import { api } from '@/api/client'
 import { useYard } from '@/contexts/YardContext'
@@ -38,7 +38,9 @@ export default function SimulatePage() {
   const [results, setResults] = useState<Map<number, PlantScan>>(new Map())
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const qc = useQueryClient()
 
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
@@ -47,6 +49,14 @@ export default function SimulatePage() {
   const { data: missions } = useQuery({
     queryKey: ['missions', activeYardId],
     queryFn: () => api.missions.list(activeYardId),
+  })
+
+  const deleteMission = useMutation({
+    mutationFn: (id: number) => api.missions.remove(id),
+    onSuccess: () => {
+      setSelectedId(null)
+      void qc.invalidateQueries({ queryKey: ['missions'] })
+    },
   })
 
   const { data: mission } = useQuery({
@@ -91,20 +101,33 @@ export default function SimulatePage() {
     if (currentWp) map.setView([currentWp.latitude, currentWp.longitude], 18)
   }, [step, waypoints, currentWp])
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !selectedId || !currentWp) return
+  async function uploadFile(file: File) {
+    if (!selectedId || !currentWp) return
     setUploading(true)
     setUploadError(null)
     try {
       const scan = await api.scans.simulate(selectedId, currentWp.sequence, file)
       setResults(prev => new Map(prev).set(step, scan))
     } catch {
-      setUploadError('Upload failed — check your API key and try again')
+      setUploadError('Upload failed — check your connection and try again')
     } finally {
       setUploading(false)
-      e.target.value = ''
     }
+  }
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPendingFile(file)
+    await uploadFile(file)
+    e.target.value = ''
+  }
+
+  function handleDeleteMission() {
+    if (!selectedId) return
+    const name = missions?.find(m => m.id === selectedId)?.name ?? 'this mission'
+    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return
+    deleteMission.mutate(selectedId)
   }
 
   function nextStep() {
@@ -122,23 +145,42 @@ export default function SimulatePage() {
 
         <div className="bg-slate-900 rounded-xl p-4 space-y-3">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Mission</h2>
-          <select
-            value={selectedId ?? ''}
-            onChange={e => setSelectedId(e.target.value ? Number(e.target.value) : null)}
-            className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            <option value="">— choose a mission —</option>
-            {missions?.map(m => (
-              <option key={m.id} value={m.id}>{m.name} · {m.waypoints?.length ?? 0} waypoints</option>
-            ))}
-          </select>
-          <button
-            onClick={() => setStarted(true)}
-            disabled={!selectedId || !mission || waypoints.length === 0}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-sm font-medium py-2.5 rounded transition-colors"
-          >
-            Start Walk
-          </button>
+          {missions?.length === 0 ? (
+            <p className="text-sm text-slate-400">
+              No missions yet.{' '}
+              <Link to="/" className="text-emerald-400 underline">Create one on the Plan page.</Link>
+            </p>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <select
+                  value={selectedId ?? ''}
+                  onChange={e => setSelectedId(e.target.value ? Number(e.target.value) : null)}
+                  className="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+                  <option value="">— choose a mission —</option>
+                  {missions?.map(m => (
+                    <option key={m.id} value={m.id}>{m.name} · {m.waypoints?.length ?? 0} waypoints</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleDeleteMission}
+                  disabled={!selectedId || deleteMission.isPending}
+                  title="Delete selected mission"
+                  className="px-3 text-slate-500 hover:text-red-400 disabled:opacity-30 transition-colors"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              <button
+                onClick={() => setStarted(true)}
+                disabled={!selectedId || !mission || waypoints.length === 0}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-sm font-medium py-2.5 rounded transition-colors"
+              >
+                Start Walk
+              </button>
+            </>
+          )}
         </div>
       </div>
     )
@@ -239,7 +281,20 @@ export default function SimulatePage() {
             </button>
           )}
 
-          {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
+          {uploadError && (
+            <div className="space-y-1">
+              <p className="text-xs text-red-400">{uploadError}</p>
+              {pendingFile && (
+                <button
+                  onClick={() => void uploadFile(pendingFile)}
+                  disabled={uploading}
+                  className="text-xs text-emerald-400 hover:text-emerald-300 underline"
+                >
+                  {uploading ? 'Retrying…' : 'Retry upload'}
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Result card */}
           {currentResult && (
