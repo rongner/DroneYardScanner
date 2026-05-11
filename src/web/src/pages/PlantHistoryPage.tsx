@@ -5,7 +5,11 @@ import { api } from '@/api/client'
 import { useYard } from '@/contexts/useYard'
 import { ScanPhoto } from '@/components/ScanPhoto'
 import { HealthBadge } from '@/components/HealthBadge'
+import { Pagination, paginate } from '@/components/Pagination'
 import type { PlantScan, PlantSummary } from '@/api/types'
+
+const PLANTS_PER_PAGE = 10
+const HISTORY_PER_PAGE = 8
 
 function HealthTrendIcon({ status }: { status: string | null }) {
   if (!status) return null
@@ -75,6 +79,8 @@ function ScanHistoryCard({ scan }: { scan: PlantScan }) {
 export default function PlantHistoryPage() {
   const { activeYardId, yards } = useYard()
   const [selectedPlant, setSelectedPlant] = useState<PlantSummary | null>(null)
+  const [plantsPage, setPlantsPage] = useState(1)
+  const [historyPage, setHistoryPage] = useState(1)
 
   const { data: plants, isLoading: plantsLoading } = useQuery({
     queryKey: ['plants', activeYardId],
@@ -132,7 +138,14 @@ export default function PlantHistoryPage() {
 
         {history && history.length > 0 && (
           <div className="pt-2">
-            {history.map(scan => <ScanHistoryCard key={scan.id} scan={scan} />)}
+            {paginate(history, historyPage, HISTORY_PER_PAGE).map(scan => (
+              <ScanHistoryCard key={scan.id} scan={scan} />
+            ))}
+            <Pagination
+              page={historyPage}
+              totalPages={Math.ceil(history.length / HISTORY_PER_PAGE)}
+              onChange={setHistoryPage}
+            />
           </div>
         )}
       </div>
@@ -160,9 +173,14 @@ export default function PlantHistoryPage() {
 
       {plants && plants.length > 0 && (
         <div className="space-y-2">
-          {plants.map(p => (
-            <PlantCard key={p.label} summary={p} onClick={() => setSelectedPlant(p)} />
+          {paginate(plants, plantsPage, PLANTS_PER_PAGE).map(p => (
+            <PlantCard key={p.label} summary={p} onClick={() => { setSelectedPlant(p); setHistoryPage(1) }} />
           ))}
+          <Pagination
+            page={plantsPage}
+            totalPages={Math.ceil(plants.length / PLANTS_PER_PAGE)}
+            onChange={setPlantsPage}
+          />
         </div>
       )}
     </div>

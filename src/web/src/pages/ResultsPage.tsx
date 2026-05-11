@@ -4,7 +4,10 @@ import { api } from '@/api/client'
 import { useYard } from '@/contexts/useYard'
 import { ScanPhoto } from '@/components/ScanPhoto'
 import { HealthBadge } from '@/components/HealthBadge'
+import { Pagination, paginate } from '@/components/Pagination'
 import type { PlantScan } from '@/api/types'
+
+const PER_PAGE = 12
 
 function StatCard({ label, value, accent = false }: { label: string; value: string | number; accent?: boolean }) {
   return (
@@ -45,6 +48,7 @@ function ScanCard({ scan }: { scan: PlantScan }) {
 export default function ResultsPage() {
   const { activeYardId } = useYard()
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [page, setPage] = useState(1)
 
   const { data: missions } = useQuery({
     queryKey: ['missions', activeYardId],
@@ -59,6 +63,8 @@ export default function ResultsPage() {
 
   const total = scans?.length ?? 0
   const healthy = scans?.filter(s => s.health_status?.toLowerCase().includes('healthy')).length ?? 0
+  const totalPages = Math.ceil(total / PER_PAGE)
+  const visibleScans = scans ? paginate(scans, page, PER_PAGE) : []
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -67,7 +73,7 @@ export default function ResultsPage() {
       <div className="bg-slate-900 rounded-xl p-4">
         <select
           value={selectedId ?? ''}
-          onChange={e => setSelectedId(e.target.value ? Number(e.target.value) : null)}
+          onChange={e => { setSelectedId(e.target.value ? Number(e.target.value) : null); setPage(1) }}
           className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
         >
           <option value="">— select a mission —</option>
@@ -91,9 +97,12 @@ export default function ResultsPage() {
           {total === 0 ? (
             <p className="text-slate-500 text-center py-16">No scans yet for this mission.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {scans.map(scan => <ScanCard key={scan.id} scan={scan} />)}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {visibleScans.map(scan => <ScanCard key={scan.id} scan={scan} />)}
+              </div>
+              <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+            </>
           )}
         </>
       )}
