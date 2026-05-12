@@ -11,5 +11,5 @@ python-multipart==0.0.28
 websockets==13.1
 pillow==12.2.0
 djitellopy==2.5.0
-numpy==2.1.2
+numpy==2.4.4
 python-dotenv==1.2.2
