@@ -179,7 +179,7 @@ export default function SimulatePage() {
   }
 
   if (allDone) {
-    const healthy = [...results.values()].filter(s => s.health_status?.includes('healthy')).length
+    const healthy = [...results.values()].filter(s => s.health_status?.toLowerCase() === 'healthy').length
     return (
       <div className="p-6 max-w-2xl mx-auto space-y-6 text-center">
         <div className="flex justify-center">

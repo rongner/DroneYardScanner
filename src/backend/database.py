@@ -3,6 +3,7 @@ from .config import settings
 
 engine = create_async_engine(settings.database_url, echo=False)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
+async_session = SessionLocal
 
 
 async def get_db() -> AsyncSession:

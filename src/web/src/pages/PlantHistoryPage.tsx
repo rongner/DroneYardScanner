@@ -13,7 +13,7 @@ const HISTORY_PER_PAGE = 8
 
 function HealthTrendIcon({ status }: { status: string | null }) {
   if (!status) return null
-  return status.toLowerCase().includes('healthy')
+  return status.toLowerCase().toLowerCase() === 'healthy'
     ? <TrendingUp size={14} className="text-emerald-400" />
     : <TrendingDown size={14} className="text-red-400" />
 }
@@ -41,7 +41,7 @@ function PlantCard({ summary, onClick }: { summary: PlantSummary; onClick: () =>
 }
 
 function ScanHistoryCard({ scan }: { scan: PlantScan }) {
-  const healthy = scan.health_status?.toLowerCase().includes('healthy')
+  const healthy = scan.health_status?.toLowerCase().toLowerCase() === 'healthy'
   return (
     <div className="flex gap-3">
       <div className="flex flex-col items-center">
@@ -124,7 +124,7 @@ export default function PlantHistoryPage() {
           </h1>
           <p className="text-sm text-slate-400 mt-1">
             {selectedPlant.scan_count} scan{selectedPlant.scan_count !== 1 ? 's' : ''} · current status:{' '}
-            <span className={selectedPlant.latest_health?.includes('healthy') ? 'text-emerald-400' : 'text-red-400'}>
+            <span className={selectedPlant.latest_health?.toLowerCase() === 'healthy' ? 'text-emerald-400' : 'text-red-400'}>
               {selectedPlant.latest_health ?? 'unknown'}
             </span>
           </p>

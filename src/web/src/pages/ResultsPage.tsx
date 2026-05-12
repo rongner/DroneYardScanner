@@ -14,7 +14,7 @@ function exportPDF(mission: Mission, scans: PlantScan[], healthy: number) {
     const health = s.health_status
       ? s.health_status.charAt(0).toUpperCase() + s.health_status.slice(1)
       : 'Unknown'
-    const healthColor = s.health_status?.includes('healthy') ? '#10b981' : '#ef4444'
+    const healthColor = s.health_status?.toLowerCase() === 'healthy' ? '#10b981' : '#ef4444'
     const confidence = s.probability != null ? `${(s.probability * 100).toFixed(0)}% confidence` : ''
     return `
       <div class="card">
@@ -133,7 +133,7 @@ export default function ResultsPage() {
 
   const selectedMission = missions?.find(m => m.id === selectedId) ?? null
   const total = scans?.length ?? 0
-  const healthy = scans?.filter(s => s.health_status?.toLowerCase().includes('healthy')).length ?? 0
+  const healthy = scans?.filter(s => s.health_status?.toLowerCase().toLowerCase() === 'healthy').length ?? 0
   const totalPages = Math.ceil(total / PER_PAGE)
   const visibleScans = scans ? paginate(scans, page, PER_PAGE) : []
 

@@ -1,12 +1,13 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..database import get_db
+from ..limiter import limiter
 from ..models import Mission, Waypoint, MissionStatus
 
 router = APIRouter(prefix="/api/missions", tags=["missions"])
@@ -54,7 +55,8 @@ async def list_missions(yard_id: int | None = None, db: AsyncSession = Depends(g
 
 
 @router.post("", response_model=MissionOut, status_code=201)
-async def create_mission(body: MissionIn, db: AsyncSession = Depends(get_db)):
+@limiter.limit("30/minute")
+async def create_mission(request: Request, body: MissionIn, db: AsyncSession = Depends(get_db)):
     mission = Mission(name=body.name, yard_id=body.yard_id)
     db.add(mission)
     await db.flush()
@@ -79,7 +81,8 @@ async def get_mission(mission_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.delete("/{mission_id}", status_code=204)
-async def delete_mission(mission_id: int, db: AsyncSession = Depends(get_db)):
+@limiter.limit("30/minute")
+async def delete_mission(request: Request, mission_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Mission).where(Mission.id == mission_id))
     mission = result.scalar_one_or_none()
     if not mission:

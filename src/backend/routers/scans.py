@@ -3,7 +3,7 @@ from __future__ import annotations
 import pathlib
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import func, select
@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from ..config import settings
 from ..database import get_db
+from ..limiter import limiter
 from ..models import Mission, PlantScan, Waypoint
 from ..plant.kindwise_client import assess_plant_health
 
@@ -131,7 +132,9 @@ async def get_photo(scan_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/simulate/{mission_id}/{sequence}", response_model=ScanOut, status_code=201)
+@limiter.limit("20/minute")
 async def simulate_scan(
+    request: Request,
     mission_id: int,
     sequence: int,
     photo: UploadFile = File(...),

@@ -1,4 +1,7 @@
+alembic==1.14.1
 fastapi==0.136.1
+loguru==0.7.2
+slowapi==0.1.9
 pydantic-settings==2.14.1
 uvicorn[standard]==0.46.0
 sqlalchemy==2.0.35

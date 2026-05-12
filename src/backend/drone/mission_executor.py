@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import os
 from datetime import datetime
 from typing import Callable, Awaitable
@@ -9,10 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import Mission, Waypoint, PlantScan, MissionStatus
 from ..mission.gps_converter import gps_to_relative_move
 from ..plant.kindwise_client import assess_plant_health
+from loguru import logger
+
 from ..config import settings
 from .tello_controller import tello
-
-logger = logging.getLogger(__name__)
 
 StatusCallback = Callable[[str], Awaitable[None]]
 _TELLO_TIMEOUT = 10.0  # seconds per drone command before treating as a WiFi drop

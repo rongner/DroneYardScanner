@@ -1,11 +1,9 @@
 import base64
 import json
-import logging
 import pathlib
 import httpx
+from loguru import logger
 from ..config import settings
-
-logger = logging.getLogger(__name__)
 
 HEALTH_URL = "https://plant.id/api/v3/health_assessment"
 

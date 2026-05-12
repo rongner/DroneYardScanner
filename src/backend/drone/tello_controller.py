@@ -1,9 +1,7 @@
 import asyncio
-import logging
+from loguru import logger
 from djitellopy import Tello
 from ..mission.gps_converter import RelativeMove
-
-logger = logging.getLogger(__name__)
 
 FLIGHT_ALTITUDE_CM = 150  # hover height during mission
 MOVE_SPEED = 30            # cm/s
