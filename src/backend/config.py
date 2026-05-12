@@ -8,7 +8,7 @@ _ENV_FILE = Path(__file__).parent.parent.parent / ".env"
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=str(_ENV_FILE), env_file_encoding="utf-8")
 
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/droneyardscanner"
+    database_url: str
     kindwise_api_key: str = ""
     photo_dir: str = "photos"
     tello_host: str = "192.168.10.1"

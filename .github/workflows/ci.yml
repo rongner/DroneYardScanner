@@ -27,6 +27,8 @@ jobs:
 
       - name: Test
         working-directory: src
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:ci-only@localhost/test
         run: python -m pytest tests/ -v
 
   test-web:

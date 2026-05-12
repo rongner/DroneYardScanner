@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: droneyardscanner
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -21,7 +21,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/droneyardscanner
+      DATABASE_URL: postgresql+asyncpg://postgres:${DB_PASSWORD:?DB_PASSWORD must be set in .env}@db:5432/droneyardscanner
       KINDWISE_API_KEY: ${KINDWISE_API_KEY:-}
       CORS_ORIGINS: '["http://localhost:5173","http://localhost"]'
     volumes:

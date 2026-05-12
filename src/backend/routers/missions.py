@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -14,10 +14,10 @@ router = APIRouter(prefix="/api/missions", tags=["missions"])
 
 
 class WaypointIn(BaseModel):
-    sequence: int
-    latitude: float
-    longitude: float
-    label: str | None = None
+    sequence: int = Field(..., ge=0)
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    label: str | None = Field(None, max_length=100)
 
 
 class MissionIn(BaseModel):

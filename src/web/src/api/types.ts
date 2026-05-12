@@ -32,7 +32,6 @@ export interface PlantScan {
   id: number
   waypoint_id: number
   waypoint: WaypointBrief
-  photo_path: string
   plant_name: string | null
   health_status: string | null
   diseases: string | null

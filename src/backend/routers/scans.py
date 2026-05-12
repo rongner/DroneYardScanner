@@ -32,7 +32,6 @@ class ScanOut(BaseModel):
     id: int
     waypoint_id: int
     waypoint: WaypointBrief
-    photo_path: str
     plant_name: str | None
     health_status: str | None
     diseases: str | None
@@ -128,7 +127,13 @@ async def get_photo(scan_id: int, db: AsyncSession = Depends(get_db)):
     scan = result.scalar_one_or_none()
     if not scan:
         raise HTTPException(404, "Scan not found")
-    return FileResponse(scan.photo_path, media_type="image/jpeg")
+    base = pathlib.Path(settings.photo_dir).resolve()
+    resolved = pathlib.Path(scan.photo_path).resolve()
+    try:
+        resolved.relative_to(base)
+    except ValueError:
+        raise HTTPException(403, "Access denied")
+    return FileResponse(resolved, media_type="image/jpeg")
 
 
 @router.post("/simulate/{mission_id}/{sequence}", response_model=ScanOut, status_code=201)
@@ -151,11 +156,18 @@ async def simulate_scan(
     if not wp:
         raise HTTPException(404, "Waypoint not found")
 
+    _ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
+    if photo.content_type not in _ALLOWED_MIME:
+        raise HTTPException(400, "Only JPEG, PNG, or WebP images are accepted")
+
     photo_bytes = await photo.read()
+    if len(photo_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(413, "File too large (max 10 MB)")
+
     try:
         photo_path = _save_photo(mission_id, sequence, photo_bytes)
     except OSError as exc:
-        raise HTTPException(500, f"Failed to save photo: {exc}") from exc
+        raise HTTPException(500, "Failed to save photo") from exc
     analysis = await assess_plant_health(photo_path)  # always returns a dict — never raises
 
     existing_row = await db.execute(
